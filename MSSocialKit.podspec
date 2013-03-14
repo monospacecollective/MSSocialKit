@@ -10,8 +10,8 @@ Pod::Spec.new do |s|
   s.author       = { "Devon Tivona" => "devon@monospacecollective.com" }
   s.source       = { :git => 'https://github.com/monospacecollective/MSSocialKit.git', :tag => s.version.to_s }
   
-  s.source_files = 'MSSocialKit/*.{h,m,xcdatamodeld}'
-  s.resources = 'MSSocialKit/*.{png}'
+  s.source_files = 'MSSocialKit/*.{h,m}'
+  s.resources = 'MSSocialKit/*.{png,xcdatamodeld}'
 
   s.requires_arc = true
 
