@@ -1,6 +1,6 @@
 //
 //  RSInstagramPhoto.h
-//  IMUNA
+//  MSSocialKit
 //
 //  Created by Devon Tivona on 2/19/13.
 //  Copyright (c) 2013 Devon Tivona. All rights reserved.
