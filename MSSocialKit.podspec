@@ -1,4 +1,5 @@
 Pod::Spec.new do |s|
+
   s.name         = "MSSocialKit"
   s.version      = "0.0.1"
   s.license      = 'MIT'
@@ -10,11 +11,17 @@ Pod::Spec.new do |s|
   s.source       = { :git => 'https://github.com/monospacecollective/MSSocialKit.git', :tag => s.version.to_s }
   
   s.source_files = 'MSSocialKit/*.{h,m}'
+  s.resources = 'MSSocialKit/*.{png,xcdatamodeld}'
 
   s.requires_arc = true
 
-  s.frameworks   = 'QuartzCore'
+  s.frameworks   = ['QuartzCore', 'Social']
 
-  s.dependency 'UIColor-Utilities'    , '~> 1.0.1'
-  s.dependency 'KGNoise'              , '~> 1.1.0'
+  s.dependency 'RestKit', '0.20.0rc1'
+  s.dependency 'FXLabel', '~> 1.4.2'
+  s.dependency 'KGNoise', '~> 1.1.0'
+  s.dependency 'FormatterKit', '~> 1.1.1'
+  s.dependency 'SVSegmentedControl', '~> 0.1'
+  s.dependency 'UIColor-Utilities', '~> 1.0.1'
+
 end
