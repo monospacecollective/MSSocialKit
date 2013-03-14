@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
   s.source       = { :git => 'https://github.com/monospacecollective/MSSocialKit.git', :tag => s.version.to_s }
   
   s.source_files = 'MSSocialKit/*.{h,m}'
-  s.resources = 'MSSocialKit/*.{png,xcdatamodeld}'
+  s.resources    = 'MSSocialKit/*.{png,xcdatamodeld}'
 
   s.requires_arc = true
 
