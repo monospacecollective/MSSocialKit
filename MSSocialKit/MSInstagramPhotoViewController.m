@@ -20,7 +20,7 @@ NSString * const RSInstagramPhotoCellReuseIdentifier = @"RSInstagramPhotoCellReu
 
 @property (nonatomic, strong) UIRefreshControl *refreshControl;
 @property (nonatomic, strong) NSFetchedResultsController *fetchedResultsController;
-@property (nonatomic, strong) MSPlaceholderLabel *placeholderLabel;
+@property (nonatomic, strong) UIView *placeholderLabel;
 
 - (void)reloadData;
 - (void)configureLayoutForInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation;
@@ -75,10 +75,17 @@ NSString * const RSInstagramPhotoCellReuseIdentifier = @"RSInstagramPhotoCellReu
     self.collectionView.showsVerticalScrollIndicator = NO;
     
     // Configure placeholder label
-    self.placeholderLabel = [MSPlaceholderLabel new];
-    self.placeholderLabel.frame = self.collectionView.bounds;
-    self.placeholderLabel.text = @"No Photos Available";
-    [self.view addSubview:self.placeholderLabel];
+    if ([MSSocialKitManager sharedManager].twitterPlaceholderView) {
+        self.placeholderLabel = [MSSocialKitManager sharedManager].instagramPlaceholderView;
+    } else {
+        MSPlaceholderLabel *placeholderLabel = [MSPlaceholderLabel new];
+        placeholderLabel.frame = self.collectionView.bounds;
+        placeholderLabel.text = @"No Photos Available";
+        self.placeholderLabel = placeholderLabel;
+    }
+    
+    self.collectionView.backgroundView = self.placeholderLabel;
+    [self.placeholderLabel setNeedsLayout];
     
     // Reload the data
     [self reloadData];

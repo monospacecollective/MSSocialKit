@@ -28,6 +28,9 @@
 @property (strong, nonatomic) NSDictionary *secondaryTextAttributes;
 @property (strong, nonatomic) NSDictionary *contentTextAttributes;
 
+@property (strong, nonatomic) UIView *twitterPlaceholderView;
+@property (strong, nonatomic) UIView *instagramPlaceholderView;
+
 + (instancetype)sharedManager;
 
 - (void)configureStorage;

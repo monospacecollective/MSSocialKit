@@ -23,7 +23,7 @@ NSString * const RSTweetCellReuseIdentifier = @"RSTweetCellReuseIdentifier";
 
 @property (nonatomic, strong) UIRefreshControl *refreshControl;
 @property (nonatomic, strong) NSFetchedResultsController *fetchedResultsController;
-@property (nonatomic, strong) MSPlaceholderLabel *placeholderLabel;
+@property (nonatomic, strong) UIView *placeholderLabel;
 
 - (void)reloadData;
 - (void)configureLayoutForInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation;
@@ -74,14 +74,20 @@ NSString * const RSTweetCellReuseIdentifier = @"RSTweetCellReuseIdentifier";
     [self.refreshControl addTarget:self action:@selector(reloadData) forControlEvents:UIControlEventValueChanged];
     self.refreshControl.tintColor = [MSSocialKitManager sharedManager].cellBackgroundColor;
     [self.collectionView addSubview:self.refreshControl];
-    
     self.collectionView.showsVerticalScrollIndicator = NO;
     
     // Configure placeholder label
-    self.placeholderLabel = [MSPlaceholderLabel new];
-    self.placeholderLabel.frame = self.collectionView.bounds;
-    self.placeholderLabel.text = @"No Tweets Available";
-    [self.view addSubview:self.placeholderLabel];
+    if ([MSSocialKitManager sharedManager].twitterPlaceholderView) {
+        self.placeholderLabel = [MSSocialKitManager sharedManager].twitterPlaceholderView;
+    } else {
+        MSPlaceholderLabel *placeholderLabel = [MSPlaceholderLabel new];
+        placeholderLabel.frame = self.collectionView.bounds;
+        placeholderLabel.text = @"No Tweets Available";
+        self.placeholderLabel = placeholderLabel;
+    }
+    
+    self.collectionView.backgroundView = self.placeholderLabel;
+    [self.placeholderLabel setNeedsLayout];
     
     // Reload the data
     [self reloadData];

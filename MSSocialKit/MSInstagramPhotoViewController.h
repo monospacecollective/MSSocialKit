@@ -12,6 +12,4 @@
 
 @interface MSInstagramPhotoViewController : UICollectionViewController <MSSocialChildViewController, UICollectionViewDataSource, UICollectionViewDelegateWaterfallLayout, NSFetchedResultsControllerDelegate>
 
-+ (NSInteger)columnCountForInterfaceOrientation:(UIInterfaceOrientation)orientation;
-
 @end
