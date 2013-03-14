@@ -12,4 +12,6 @@
 
 @interface MSInstagramPhotoViewController : UICollectionViewController <MSSocialChildViewController, UICollectionViewDataSource, UICollectionViewDelegateWaterfallLayout, NSFetchedResultsControllerDelegate>
 
+@property (strong, nonatomic) Class cellClass;
+
 @end

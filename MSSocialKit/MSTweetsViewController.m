@@ -42,7 +42,9 @@ NSString * const RSTweetCellReuseIdentifier = @"RSTweetCellReuseIdentifier";
         UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
         self = [super initWithCollectionViewLayout:layout];
     }
-
+    if (self) {
+        self.cellClass = MSTweetCell.class;
+    }
     return self;
 }
 
@@ -51,7 +53,7 @@ NSString * const RSTweetCellReuseIdentifier = @"RSTweetCellReuseIdentifier";
     [super viewDidLoad];
     
     self.collectionView.backgroundColor = [MSSocialKitManager sharedManager].viewBackgroundColor;
-    [self.collectionView registerClass:MSTweetCell.class forCellWithReuseIdentifier:RSTweetCellReuseIdentifier];
+    [self.collectionView registerClass:self.cellClass forCellWithReuseIdentifier:RSTweetCellReuseIdentifier];
     
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
         self.collectionView.delegate = self;
@@ -164,7 +166,7 @@ NSString * const RSTweetCellReuseIdentifier = @"RSTweetCellReuseIdentifier";
     [self.collectionView reloadData];
 }
 
-#pragma mark - UITableViewDataSource
+#pragma mark - UICollectionViewDataSource
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView
 {
@@ -211,7 +213,7 @@ NSString * const RSTweetCellReuseIdentifier = @"RSTweetCellReuseIdentifier";
   return height;
 }
 
-#pragma mark - UITableViewDelegate
+#pragma mark - UICollectionViewDelegate
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {

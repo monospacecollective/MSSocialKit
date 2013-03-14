@@ -12,4 +12,6 @@
 
 @interface MSTweetsViewController : UICollectionViewController <MSSocialChildViewController, UICollectionViewDataSource, UICollectionViewDelegateWaterfallLayout, UICollectionViewDelegateFlowLayout, NSFetchedResultsControllerDelegate>
 
+@property (strong, nonatomic) Class cellClass;
+
 @end

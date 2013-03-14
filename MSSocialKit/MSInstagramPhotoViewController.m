@@ -39,7 +39,9 @@ NSString * const RSInstagramPhotoCellReuseIdentifier = @"RSInstagramPhotoCellReu
         UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
         self = [super initWithCollectionViewLayout:layout];
     }
-    
+    if (self) {
+        self.cellClass = MSInstagramPhotoCell.class;
+    }
     return self;
 }
 
@@ -47,7 +49,7 @@ NSString * const RSInstagramPhotoCellReuseIdentifier = @"RSInstagramPhotoCellReu
 {
     [super viewDidLoad];
     
-    [self.collectionView registerClass:MSInstagramPhotoCell.class forCellWithReuseIdentifier:RSInstagramPhotoCellReuseIdentifier];
+    [self.collectionView registerClass:self.cellClass forCellWithReuseIdentifier:RSInstagramPhotoCellReuseIdentifier];
     self.collectionView.backgroundColor = [MSSocialKitManager sharedManager].viewBackgroundColor;
     
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
