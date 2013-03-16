@@ -10,8 +10,9 @@
 #import "MSSocialKitViewController.h"
 #import "UICollectionViewWaterfallLayout.h"
 
-@interface MSTweetsViewController : UICollectionViewController <MSSocialChildViewController, UICollectionViewDataSource, UICollectionViewDelegateWaterfallLayout, UICollectionViewDelegateFlowLayout, NSFetchedResultsControllerDelegate>
+@interface MSTweetsViewController : UICollectionViewController <MSSocialChildViewController>
 
+@property (nonatomic, strong) UIRefreshControl *refreshControl;
 @property (strong, nonatomic) Class cellClass;
 
 @end

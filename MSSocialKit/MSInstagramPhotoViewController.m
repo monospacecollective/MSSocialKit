@@ -11,14 +11,12 @@
 #import "MSInstagramPhoto.h"
 #import "MSPlaceholderLabel.h"
 #import "MSSocialKitManager.h"
-
 #import <RestKit/RestKit.h>
 
 NSString * const RSInstagramPhotoCellReuseIdentifier = @"RSInstagramPhotoCellReuseIdentifier";
 
-@interface MSInstagramPhotoViewController ()
+@interface MSInstagramPhotoViewController () <NSFetchedResultsControllerDelegate, UICollectionViewDelegateWaterfallLayout>
 
-@property (nonatomic, strong) UIRefreshControl *refreshControl;
 @property (nonatomic, strong) NSFetchedResultsController *fetchedResultsController;
 @property (nonatomic, strong) UIView *placeholderLabel;
 
@@ -49,8 +47,8 @@ NSString * const RSInstagramPhotoCellReuseIdentifier = @"RSInstagramPhotoCellReu
 {
     [super viewDidLoad];
     
+    self.collectionView.alwaysBounceVertical = YES;
     [self.collectionView registerClass:self.cellClass forCellWithReuseIdentifier:RSInstagramPhotoCellReuseIdentifier];
-    self.collectionView.backgroundColor = [MSSocialKitManager sharedManager].viewBackgroundColor;
     
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
         self.collectionView.delegate = self;
@@ -71,7 +69,6 @@ NSString * const RSInstagramPhotoCellReuseIdentifier = @"RSInstagramPhotoCellReu
     // Configure refresh view controller
     self.refreshControl = [[UIRefreshControl alloc] init];
     [self.refreshControl addTarget:self action:@selector(reloadData) forControlEvents:UIControlEventValueChanged];
-    self.refreshControl.tintColor = [MSSocialKitManager sharedManager].cellBackgroundColor;
     [self.collectionView addSubview:self.refreshControl];
 
     self.collectionView.showsVerticalScrollIndicator = NO;
@@ -93,9 +90,9 @@ NSString * const RSInstagramPhotoCellReuseIdentifier = @"RSInstagramPhotoCellReu
     [self reloadData];
 }
 
-- (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
+- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
-    [self configureLayoutForInterfaceOrientation:toInterfaceOrientation];
+    [self configureLayoutForInterfaceOrientation:self.interfaceOrientation];
 }
 
 - (void)viewWillLayoutSubviews
@@ -109,15 +106,15 @@ NSString * const RSInstagramPhotoCellReuseIdentifier = @"RSInstagramPhotoCellReu
 - (void)configureLayoutForInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-        UICollectionViewWaterfallLayout *flowLayout = (UICollectionViewWaterfallLayout *)self.collectionView.collectionViewLayout;
-        flowLayout.itemWidth = [MSInstagramPhotoCell cellWidthForInterfaceOrientation:interfaceOrientation];
-        flowLayout.sectionInset = [MSInstagramPhotoCell cellMarginForInterfaceOrientation:interfaceOrientation];
-        flowLayout.columnCount = [MSInstagramPhotoCell columnCountForInterfaceOrientation:interfaceOrientation];
+        UICollectionViewWaterfallLayout *layout = (UICollectionViewWaterfallLayout *)self.collectionView.collectionViewLayout;
+        layout.itemWidth = [MSInstagramPhotoCell cellWidthForOrientation:interfaceOrientation];
+        layout.sectionInset = [MSInstagramPhotoCell cellMarginForOrientation:interfaceOrientation];
+        layout.columnCount = [MSInstagramPhotoCell columnCountForOrientation:interfaceOrientation];
     } else {
         UICollectionViewFlowLayout *layout = (UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout;
-        layout.sectionInset = [MSInstagramPhotoCell cellMarginForInterfaceOrientation:interfaceOrientation];
-        layout.minimumInteritemSpacing = [MSInstagramPhotoCell cellSpacingForInterfaceOrientation:interfaceOrientation];
-        layout.minimumLineSpacing = [MSInstagramPhotoCell cellSpacingForInterfaceOrientation:interfaceOrientation];
+        layout.sectionInset = [MSInstagramPhotoCell cellMarginForOrientation:interfaceOrientation];
+        layout.minimumInteritemSpacing = [MSInstagramPhotoCell cellSpacingForOrientation:interfaceOrientation];
+        layout.minimumLineSpacing = [MSInstagramPhotoCell cellSpacingForOrientation:interfaceOrientation];
     }
 }
 
@@ -125,7 +122,12 @@ NSString * const RSInstagramPhotoCellReuseIdentifier = @"RSInstagramPhotoCellReu
 
 - (void)addNew
 {
-    NSURL *instagramURL = [NSURL URLWithString:@"instagram://camera"];
+    NSURL *instagramURL;
+    if ([MSSocialKitManager sharedManager].defaultInstagramCaptionText) {
+        instagramURL = [NSURL URLWithString:[NSString stringWithFormat:@"instagram://camera?caption=%@", RKPercentEscapedQueryStringFromStringWithEncoding([MSSocialKitManager sharedManager].defaultInstagramCaptionText, NSUTF8StringEncoding)]];
+    } else {
+        instagramURL = [NSURL URLWithString:@"instagram://camera"];
+    }
     if ([[UIApplication sharedApplication] canOpenURL:instagramURL]) {
         [[UIApplication sharedApplication] openURL:instagramURL];
     } else {
@@ -141,12 +143,12 @@ NSString * const RSInstagramPhotoCellReuseIdentifier = @"RSInstagramPhotoCellReu
     NSString *path = [NSString stringWithFormat:@"/v1/tags/%@/media/recent", [[MSSocialKitManager sharedManager] instagramQuery]];
     
     // Send request
+    __weak typeof(self) weakSelf = self;
     RKObjectManager *objectManager = [[MSSocialKitManager sharedManager] instagramObjectManager];
     [objectManager getObjectsAtPath:path parameters:queryParams success:^(RKObjectRequestOperation *operation, RKMappingResult *mappingResult) {
-        [self.refreshControl endRefreshing];
-        NSLog(@"Fetched Instagram photos %@", [mappingResult array]);
+        [weakSelf.refreshControl endRefreshing];
     } failure:^(RKObjectRequestOperation *operation, NSError *error) {
-        [self.refreshControl endRefreshing];
+        [weakSelf.refreshControl endRefreshing];
         NSLog(@"Instagram photo load failed with error: %@", error);
     }];
 }
@@ -188,23 +190,14 @@ NSString * const RSInstagramPhotoCellReuseIdentifier = @"RSInstagramPhotoCellReu
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    CGFloat height = [self heightForItemAtIndexPath:indexPath];
-    CGFloat width = [MSInstagramPhotoCell cellWidthForInterfaceOrientation:self.interfaceOrientation];
-    return CGSizeMake(width, height);
+    MSInstagramPhoto *instagramPhoto = [self.fetchedResultsController objectAtIndexPath:indexPath];
+    return [MSInstagramPhotoCell cellSizeForCaption:instagramPhoto.caption orientation:self.interfaceOrientation];
 }
 
 - (CGFloat)heightForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    MSInstagramPhoto *photo = [self.fetchedResultsController objectAtIndexPath:indexPath];
-    CGSize captionSize = [photo.caption sizeWithFont:[UIFont systemFontOfSize:[MSInstagramPhotoCell fontSize]]
-                                   constrainedToSize:CGSizeMake([MSInstagramPhotoCell instagramImageSizeForInterfaceOrientation:self.interfaceOrientation].width, 1000)];
-    
-    
-    NSInteger paddingCount = captionSize.height ? 4 : 3;
-    return captionSize.height +
-           [MSInstagramPhotoCell instagramImageSizeForInterfaceOrientation:self.interfaceOrientation].height +
-           [MSInstagramPhotoCell profileImageSizeForInterfaceOrientation:self.interfaceOrientation].height +
-           [MSInstagramPhotoCell cellPaddingForInterfaceOrientation:self.interfaceOrientation] * paddingCount;
+    MSInstagramPhoto *instagramPhoto = [self.fetchedResultsController objectAtIndexPath:indexPath];
+    return [MSInstagramPhotoCell cellSizeForCaption:instagramPhoto.caption orientation:self.interfaceOrientation].height;
 }
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
@@ -218,7 +211,7 @@ NSString * const RSInstagramPhotoCellReuseIdentifier = @"RSInstagramPhotoCellReu
     } else if ([[UIApplication sharedApplication] canOpenURL:instagramWebURL]) {
         [[UIApplication sharedApplication] openURL:instagramWebURL];
     } else {
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Warning" message:@"This device is not configured to view Instagram photos." delegate:self cancelButtonTitle:@"Continue" otherButtonTitles: nil];
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Warning" message:@"This device is not configured to view Instagram photos." delegate:self cancelButtonTitle:@"Continue" otherButtonTitles:nil];
         [alert show];
     }
 }

@@ -24,6 +24,9 @@
 
 @protocol MSSocialChildViewController
 
+@property (nonatomic, strong) UIRefreshControl *refreshControl;
+@property (strong, nonatomic) Class cellClass;
+
 - (void)addNew;
 
 @end

@@ -19,9 +19,8 @@
 
 NSString * const RSTweetCellReuseIdentifier = @"RSTweetCellReuseIdentifier";
 
-@interface MSTweetsViewController ()
+@interface MSTweetsViewController () <NSFetchedResultsControllerDelegate, UICollectionViewDelegateWaterfallLayout>
 
-@property (nonatomic, strong) UIRefreshControl *refreshControl;
 @property (nonatomic, strong) NSFetchedResultsController *fetchedResultsController;
 @property (nonatomic, strong) UIView *placeholderLabel;
 
@@ -52,7 +51,7 @@ NSString * const RSTweetCellReuseIdentifier = @"RSTweetCellReuseIdentifier";
 {
     [super viewDidLoad];
     
-    self.collectionView.backgroundColor = [MSSocialKitManager sharedManager].viewBackgroundColor;
+    self.collectionView.alwaysBounceVertical = YES;
     [self.collectionView registerClass:self.cellClass forCellWithReuseIdentifier:RSTweetCellReuseIdentifier];
     
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
@@ -74,7 +73,6 @@ NSString * const RSTweetCellReuseIdentifier = @"RSTweetCellReuseIdentifier";
     // Configure refresh view controller
     self.refreshControl = [[UIRefreshControl alloc] init];
     [self.refreshControl addTarget:self action:@selector(reloadData) forControlEvents:UIControlEventValueChanged];
-    self.refreshControl.tintColor = [MSSocialKitManager sharedManager].cellBackgroundColor;
     [self.collectionView addSubview:self.refreshControl];
     self.collectionView.showsVerticalScrollIndicator = NO;
     
@@ -112,14 +110,14 @@ NSString * const RSTweetCellReuseIdentifier = @"RSTweetCellReuseIdentifier";
 {
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
         UICollectionViewWaterfallLayout *layout = (UICollectionViewWaterfallLayout *)self.collectionView.collectionViewLayout;
-        layout.itemWidth = [MSTweetCell cellWidthForInterfaceOrientation:interfaceOrientation];
-        layout.sectionInset = [MSTweetCell cellMarginForInterfaceOrientation:interfaceOrientation];
-        layout.columnCount = [MSTweetCell columnCountForInterfaceOrientation:interfaceOrientation];
+        layout.itemWidth = [MSTweetCell cellWidthForOrientation:interfaceOrientation];
+        layout.sectionInset = [MSTweetCell cellMarginForOrientation:interfaceOrientation];
+        layout.columnCount = [MSTweetCell columnCountForOrientation:interfaceOrientation];
     } else {
         UICollectionViewFlowLayout *layout = (UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout;
-        layout.sectionInset = [MSTweetCell cellMarginForInterfaceOrientation:interfaceOrientation];
-        layout.minimumInteritemSpacing = [MSTweetCell cellSpacingForInterfaceOrientation:interfaceOrientation];
-        layout.minimumLineSpacing = [MSTweetCell cellSpacingForInterfaceOrientation:interfaceOrientation];
+        layout.sectionInset = [MSTweetCell cellMarginForOrientation:interfaceOrientation];
+        layout.minimumInteritemSpacing = [MSTweetCell cellSpacingForOrientation:interfaceOrientation];
+        layout.minimumLineSpacing = [MSTweetCell cellSpacingForOrientation:interfaceOrientation];
     }
 }
 
@@ -127,7 +125,7 @@ NSString * const RSTweetCellReuseIdentifier = @"RSTweetCellReuseIdentifier";
 {    
     if ([SLComposeViewController isAvailableForServiceType:SLServiceTypeTwitter]) {
         SLComposeViewController *composeViewController = [SLComposeViewController composeViewControllerForServiceType:SLServiceTypeTwitter];
-        [composeViewController setInitialText:[[MSSocialKitManager sharedManager] twitterComposeText]];
+        [composeViewController setInitialText:[MSSocialKitManager sharedManager].defaultTwitterComposeText];
         [self presentViewController:composeViewController animated:YES completion:nil];
     } else {
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Warning" message:@"This device is not configured to post to Twitter." delegate:self cancelButtonTitle:@"Continue" otherButtonTitles: nil];
@@ -148,12 +146,12 @@ NSString * const RSTweetCellReuseIdentifier = @"RSTweetCellReuseIdentifier";
     queryParams = [NSDictionary dictionaryWithObjectsAndKeys:q, @"q", rpp, @"rpp", withTwitterUserId, @"with_twitter_user_id", resultType, @"result_type", nil];
     
     // Send request
+    __weak typeof(self) weakSelf = self;
     RKObjectManager *objectManager = [[MSSocialKitManager sharedManager] twitterObjectManager];
     [objectManager getObjectsAtPath:@"/search.json" parameters:queryParams success:^(RKObjectRequestOperation *operation, RKMappingResult *mappingResult) {
-        [self.refreshControl endRefreshing];
-        NSLog(@"Fetched tweets %@", [mappingResult array]);
+        [weakSelf.refreshControl endRefreshing];
     } failure:^(RKObjectRequestOperation *operation, NSError *error) {
-        [self.refreshControl endRefreshing];
+        [weakSelf.refreshControl endRefreshing];
         NSLog(@"Tweet load failed with error: %@", error);
     }];
 }
@@ -191,29 +189,19 @@ NSString * const RSTweetCellReuseIdentifier = @"RSTweetCellReuseIdentifier";
     return [self heightForItemAtIndexPath:indexPath];
 }
 
+#pragma mark - UICollectionViewDelegate
+
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    CGFloat height = [self heightForItemAtIndexPath:indexPath];
-    CGFloat width = [MSTweetCell cellWidthForInterfaceOrientation:self.interfaceOrientation];
-    return CGSizeMake(width, height);
+    MSTweet *tweet = [self.fetchedResultsController objectAtIndexPath:indexPath];
+    return [MSTweetCell cellSizeForTweet:tweet.text orientation:self.interfaceOrientation];
 }
               
 - (CGFloat)heightForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-  MSTweet *tweet = [self.fetchedResultsController objectAtIndexPath:indexPath];
-  
-  CGFloat width = [MSTweetCell cellWidthForInterfaceOrientation:self.interfaceOrientation] - [MSTweetCell cellPaddingForInterfaceOrientation:self.interfaceOrientation] * 2;
-  CGFloat fontSize = [MSTweetCell tweetFontSize];
-  
-  CGSize textSize = [tweet.text sizeWithFont:[UIFont systemFontOfSize:fontSize] constrainedToSize:CGSizeMake(width, 1000)];
-  CGFloat height = textSize.height +
-  [MSTweetCell cellPaddingForInterfaceOrientation:self.interfaceOrientation] * 3 +
-  [MSTweetCell profileImageSizeForInterfaceOrientation:self.interfaceOrientation].height;
-  
-  return height;
+    MSTweet *tweet = [self.fetchedResultsController objectAtIndexPath:indexPath];
+    return [MSTweetCell cellSizeForTweet:tweet.text orientation:self.interfaceOrientation].height;
 }
-
-#pragma mark - UICollectionViewDelegate
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
