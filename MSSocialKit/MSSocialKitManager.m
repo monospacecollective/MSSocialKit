@@ -7,6 +7,7 @@
 //
 
 #import "MSSocialKitManager.h"
+#import "MSSocialCell.h"
 
 static MSSocialKitManager *singletonInstance = nil;
 
