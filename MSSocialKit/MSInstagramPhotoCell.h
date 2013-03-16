@@ -7,26 +7,20 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "MSSocialCell.h"
 
 @class MSInstagramPhoto;
 
-@interface MSInstagramPhotoCell : UICollectionViewCell
+@interface MSInstagramPhotoCell : MSSocialCell
 
-@property (nonatomic, strong) MSInstagramPhoto *photo;
+@property (strong, nonatomic) MSInstagramPhoto *photo;
 
+@property (strong, nonatomic) UIImageView *imageView;
+@property (strong, nonatomic) UIImageView *userImageView;
+@property (strong, nonatomic) UILabel *userLabel;
+@property (strong, nonatomic) UILabel *timeLabel;
+@property (strong, nonatomic) UILabel *captionLabel;
 
-+ (CGFloat)cellWidthForInterfaceOrientation:(UIInterfaceOrientation)orientation;
-+ (CGFloat)cellSpacingForInterfaceOrientation:(UIInterfaceOrientation)orientation;
-+ (CGFloat)cellPaddingForInterfaceOrientation:(UIInterfaceOrientation)orientation;
-
-+ (NSInteger)columnCountForInterfaceOrientation:(UIInterfaceOrientation)orientation;
-
-+ (UIEdgeInsets)cellMarginForInterfaceOrientation:(UIInterfaceOrientation)orientation;
-
-+ (CGSize)profileImageSizeForInterfaceOrientation:(UIInterfaceOrientation)orientation;
-+ (CGSize)instagramImageSizeForInterfaceOrientation:(UIInterfaceOrientation)orientation;
-
-+ (CGFloat)fontSize;
++ (CGSize)cellSizeForCaption:(NSString *)caption orientation:(UIInterfaceOrientation)orientation;
 
 @end
- 

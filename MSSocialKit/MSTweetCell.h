@@ -7,23 +7,19 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "MSSocialCell.h"
 
 @class MSTweet;
 
-@interface MSTweetCell : UICollectionViewCell
+@interface MSTweetCell : MSSocialCell
 
 @property (strong, nonatomic) MSTweet *tweet;
 
-+ (CGFloat)cellWidthForInterfaceOrientation:(UIInterfaceOrientation)orientation;
-+ (CGFloat)cellSpacingForInterfaceOrientation:(UIInterfaceOrientation)orientation;
-+ (CGFloat)cellPaddingForInterfaceOrientation:(UIInterfaceOrientation)orientation;
+@property (strong, nonatomic) UILabel *user;
+@property (strong, nonatomic) UILabel *time;
+@property (strong, nonatomic) UILabel *content;
+@property (strong, nonatomic) UIImageView *userImageView;
 
-+ (NSInteger)columnCountForInterfaceOrientation:(UIInterfaceOrientation)orientation;
-
-+ (UIEdgeInsets)cellMarginForInterfaceOrientation:(UIInterfaceOrientation)orientation;
-
-+ (CGSize)profileImageSizeForInterfaceOrientation:(UIInterfaceOrientation)orientation;
-
-+ (CGFloat)tweetFontSize;
++ (CGSize)cellSizeForTweet:(NSString *)tweet orientation:(UIInterfaceOrientation)orientation;
 
 @end

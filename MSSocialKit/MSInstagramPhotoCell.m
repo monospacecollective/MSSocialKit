@@ -9,22 +9,12 @@
 #import "MSInstagramPhotoCell.h"
 #import "MSInstagramPhoto.h"
 #import "MSSocialKitManager.h"
-
 #import "TTTTimeIntervalFormatter.h"
 #import "UILabel+ApplyTextAttributes.h"
-
-#import <RestKit/RestKit.h>
 #import <QuartzCore/QuartzCore.h>
+#import "NSObject+FirstAppearanceValue.h"
 
-@interface MSInstagramPhotoCell ()
-
-@property (strong, nonatomic) UIImageView *imageView;
-@property (strong, nonatomic) UIImageView *userImageView;
-@property (strong, nonatomic) UILabel *userLabel;
-@property (strong, nonatomic) UILabel *timeLabel;
-@property (strong, nonatomic) UILabel *captionLabel;
-
-@end
+//#define LAYOUT_DEBUG
 
 @implementation MSInstagramPhotoCell
 
@@ -33,126 +23,114 @@
     self = [super initWithFrame:frame];
     if (self) {
         
-        self.backgroundColor = [[MSSocialKitManager sharedManager] cellBackgroundColor];
-        self.layer.shadowColor = [[UIColor blackColor] CGColor];
-        self.layer.shadowRadius = 2.0;
-        self.layer.shadowOpacity = 0.5;
-        self.layer.shadowOffset = CGSizeZero;
-        self.layer.masksToBounds = NO;
-        self.layer.borderColor = [[MSSocialKitManager sharedManager] cellBorderColor].CGColor;
-        self.layer.borderWidth = ([[UIScreen mainScreen] scale] == 2.0) ? 0.5 : 1.0;
-        self.layer.shouldRasterize = YES;
-        self.layer.rasterizationScale = [[UIScreen mainScreen] scale];
-        
+//        self.backgroundColor = [UIColor whiteColor];
+//        self.layer.shadowColor = [[UIColor blackColor] CGColor];
+//        self.layer.shadowRadius = 2.0;
+//        self.layer.shadowOpacity = 0.5;
+//        self.layer.shadowOffset = CGSizeZero;
+//        self.layer.masksToBounds = NO;
+//        self.layer.borderColor = [[UIColor blackColor] CGColor];
+//        self.layer.borderWidth = ([[UIScreen mainScreen] scale] == 2.0) ? 0.5 : 1.0;
+//        self.layer.shouldRasterize = YES;
+//        self.layer.rasterizationScale = [[UIScreen mainScreen] scale];
+
         self.userLabel = [UILabel new];
         self.userLabel.backgroundColor = [UIColor clearColor];
-        [self.userLabel applyTextAttributes:[[MSSocialKitManager sharedManager] primaryTextAttributes]];
-        [self addSubview:self.userLabel];
+        self.userLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        [self.contentView addSubview:self.userLabel];
         
         self.timeLabel = [UILabel new];
         self.timeLabel.backgroundColor = [UIColor clearColor];
-        [self.timeLabel applyTextAttributes:[[MSSocialKitManager sharedManager] secondaryTextAttributes]];
         self.timeLabel.textAlignment = NSTextAlignmentRight;
-        [self addSubview:self.timeLabel];
+        self.timeLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        [self.contentView addSubview:self.timeLabel];
         
         self.captionLabel = [UILabel new];
         self.captionLabel.backgroundColor = [UIColor clearColor];
-        [self.captionLabel applyTextAttributes:[[MSSocialKitManager sharedManager] contentTextAttributes]];
         self.captionLabel.numberOfLines = 0.0;
-        [self addSubview:self.captionLabel];
+        self.captionLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        [self.contentView addSubview:self.captionLabel];
         
         self.userImageView = [UIImageView new];
         self.userImageView.backgroundColor = [UIColor lightGrayColor];
-        self.userImageView.layer.borderColor = [[MSSocialKitManager sharedManager] imageBorderColor].CGColor;
-        self.userImageView.layer.borderWidth = ([[UIScreen mainScreen] scale] == 2.0) ? 0.5 : 1.0;
-        [self addSubview:self.userImageView];
+        self.userImageView.translatesAutoresizingMaskIntoConstraints = NO;
+        [self.contentView addSubview:self.userImageView];
         
         self.imageView = [UIImageView new];
         self.imageView.backgroundColor = [UIColor lightGrayColor];
-        self.imageView.layer.borderColor = [[MSSocialKitManager sharedManager] imageBorderColor].CGColor;
-        self.imageView.layer.borderWidth = ([[UIScreen mainScreen] scale] == 2.0) ? 0.5 : 1.0;
-        [self addSubview:self.imageView];
+        self.imageView.translatesAutoresizingMaskIntoConstraints = NO;
+        [self.contentView addSubview:self.imageView];
+        
+#if defined(LAYOUT_DEBUG)
+        self.contentView.backgroundColor = [UIColor blueColor];
+        self.userLabel.backgroundColor = [[UIColor redColor] colorWithAlphaComponent:0.5];
+        self.timeLabel.backgroundColor = [[UIColor redColor] colorWithAlphaComponent:0.5];
+        self.captionLabel.backgroundColor = [[UIColor redColor] colorWithAlphaComponent:0.5];
+        self.userImageView.backgroundColor = [[UIColor redColor] colorWithAlphaComponent:0.5];
+#endif
     }
     return self;
 }
-- (void)layoutSubviews
+
+#pragma mark - MSSocialCell
+
+- (void)updateConstraints
 {
-    [super layoutSubviews];
+    [super updateConstraints];
     
-    CGRect frame = self.frame;
-    frame.size.width = [MSInstagramPhotoCell cellWidthForInterfaceOrientation:[[UIApplication sharedApplication] statusBarOrientation]];
-    self.frame = frame;
+    [self.userLabel applyTextAttributes:self.primaryTextAttributes];
+    [self.timeLabel applyTextAttributes:self.secondaryTextAttributes];
+    [self.captionLabel applyTextAttributes:self.contentTextAttributes];
     
-    CGFloat padding = [MSInstagramPhotoCell cellPaddingForInterfaceOrientation:[[UIApplication sharedApplication] statusBarOrientation]];
-    CGSize imageSize = [MSInstagramPhotoCell profileImageSizeForInterfaceOrientation:[[UIApplication sharedApplication] statusBarOrientation]];
+    self.captionLabel.preferredMaxLayoutWidth = UIEdgeInsetsInsetRect(self.contentView.frame, self.padding).size.width;
     
-    self.userImageView.frame = CGRectMake(padding, padding, imageSize.width, imageSize.height);
+    [self.contentView removeConstraints:self.contentView.constraints];
     
-    [self.userLabel sizeToFit];
-    frame = self.userLabel.frame;
-    frame.origin.x = padding + self.userImageView.frame.size.width + self.userImageView.frame.origin.x;
-    frame.origin.y = padding;
-    frame.size.height = imageSize.height;
-    self.userLabel.frame = frame;
+    NSDictionary *views = @{ @"user" : self.userLabel , @"time" : self.timeLabel , @"caption" : self.captionLabel, @"image" : self.imageView, @"profileImage" : self.userImageView };
     
-    [self.timeLabel sizeToFit];
-    frame.origin.x += padding + self.userLabel.frame.size.width;
-    frame.size.width = self.frame.size.width - padding - frame.origin.x;
-    self.timeLabel.frame = frame;
+    NSDictionary *metrics = @{
+        @"paddingTop" : @(self.padding.top),
+        @"paddingLeft" : @(self.padding.left),
+        @"paddingBottom" : @(self.padding.bottom),
+        @"paddingRight" : @(self.padding.right),
+        @"contentMargin" : @(self.contentMargin),
+        @"profileImageSizeWidth" : @(self.profileImageSize.width),
+        @"profileImageSizeHeight" : @(self.profileImageSize.height),
+    };
     
-    frame.origin.x = padding;
-    frame.origin.y = padding * 2 + imageSize.height;
-    frame.size.width = [MSInstagramPhotoCell instagramImageSizeForInterfaceOrientation:[[UIApplication sharedApplication] statusBarOrientation]].width;
-    frame.size.height = [MSInstagramPhotoCell instagramImageSizeForInterfaceOrientation:[[UIApplication sharedApplication] statusBarOrientation]].height;
+    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-paddingTop-[profileImage(==profileImageSizeHeight)]-contentMargin-[image]-contentMargin-[caption]" options:0 metrics:metrics views:views]];
     
-    self.imageView.frame = frame;
+    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-paddingLeft-[profileImage(==profileImageSizeWidth)]-contentMargin-[user(>=0)]-contentMargin-[time]-paddingRight-|" options:0 metrics:metrics views:views]];
+    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-paddingLeft-[image]-paddingRight-|" options:0 metrics:metrics views:views]];
+    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-paddingLeft-[caption]-paddingRight-|" options:0 metrics:metrics views:views]];
     
-    frame.origin.y += padding + frame.size.height;
-    frame.size.height = [self.captionLabel.text sizeWithFont:[UIFont systemFontOfSize:[MSInstagramPhotoCell fontSize]]
-                                         constrainedToSize:CGSizeMake(frame.size.width, 1000)].height;
-    self.captionLabel.frame = frame;
-    [self.captionLabel sizeToFit];
+    // Center time and user vertically
+    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.userLabel attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.userImageView attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0]];
+    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.timeLabel attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.userImageView attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0]];
+    
+    // Image view always has even heights and widths
+    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.imageView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:self.imageView attribute:NSLayoutAttributeWidth multiplier:1.0 constant:0.0]];
 }
 
++ (BOOL)requiresConstraintBasedLayout
+{
+    return YES;
+}
+
+#pragma - MSInstagramPhotoCell
 
 - (void)setPhoto:(MSInstagramPhoto *)photo
 {
     _photo = photo;
-    
-    // Instagram Photo
-    NSURL *imageURL = [NSURL URLWithString:photo.standardResolutionURL];
-    NSMutableURLRequest *imageRequest = [NSMutableURLRequest requestWithURL:imageURL];
-    [imageRequest setHTTPShouldHandleCookies:NO];
-    [imageRequest addValue:@"image/*" forHTTPHeaderField:@"Accept"];
 
-    __weak typeof(self) weakSelf = self;
-    [self.imageView setImageWithURLRequest:imageRequest placeholderImage:nil success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
-        weakSelf.imageView.image = image;
-    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
-        
-    }];
+    // Instagram Photo
+    [self.imageView setImageWithURL:[NSURL URLWithString:photo.standardResolutionURL] placeholderImage:nil];
     
     // Profile Photo
-    NSURL *profileURL = [NSURL URLWithString:photo.profilePictureURL];
-    NSMutableURLRequest *profileRequest = [NSMutableURLRequest requestWithURL:profileURL];
-    [profileRequest setHTTPShouldHandleCookies:NO];
-    [profileRequest addValue:@"image/*" forHTTPHeaderField:@"Accept"];
-    
-    [self.userImageView setImageWithURLRequest:profileRequest placeholderImage:nil success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
-        weakSelf.userImageView.image = image;
-    } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
-        
-    }];
+    [self.userImageView setImageWithURL:[NSURL URLWithString:photo.profilePictureURL] placeholderImage:nil];
     
     self.userLabel.text = photo.name ? photo.name : photo.username;
     self.captionLabel.text = photo.caption;
-    
-    CGFloat captionVerticalOrigin;
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-        captionVerticalOrigin = 306 + 42 + 7 + 7;
-    } else {
-        captionVerticalOrigin = 306 + 42 + 7;
-    }
     
     // Setup time interval formatter
     static TTTTimeIntervalFormatter *timeIntervalFormatter = nil;
@@ -164,84 +142,44 @@
         timeIntervalFormatter.presentDeicticExpression = @"";
         [timeIntervalFormatter setLocale:[NSLocale currentLocale]];
     });
+    self.timeLabel.text = [timeIntervalFormatter stringForTimeIntervalFromDate:[NSDate date] toDate:photo.createdAt];
     
-    NSDate *now = [[NSDate alloc] init];
-    self.timeLabel.text = [timeIntervalFormatter stringForTimeIntervalFromDate:now toDate:photo.createdAt];
+    [self setNeedsLayout];
+}
+
++ (CGSize)cellSizeForCaption:(NSString *)caption orientation:(UIInterfaceOrientation)orientation;
+{
+    CGFloat width = [self cellWidthForOrientation:orientation];
     
-    [self layoutSubviews];
-}
-
-# pragma mark - Class Methods
-
-+ (CGFloat)cellWidthForInterfaceOrientation:(UIInterfaceOrientation)orientation
-{
-    CGFloat columnCount = (CGFloat)[MSInstagramPhotoCell columnCountForInterfaceOrientation:orientation];
-    CGFloat cellSpacing = [MSInstagramPhotoCell cellSpacingForInterfaceOrientation:orientation];
-    CGFloat deviceWidth;
-    if (UIInterfaceOrientationIsLandscape(orientation)) {
-        deviceWidth = [[UIScreen mainScreen] bounds].size.height;
+    UIEdgeInsets padding = [[self firstAppearanceValueMatchingBlock:^id(id appearance) {
+        return (!UIEdgeInsetsEqualToEdgeInsets([appearance padding], UIEdgeInsetsZero) ? [NSValue valueWithUIEdgeInsets:[appearance padding]] : nil);
+    }] UIEdgeInsetsValue];
+    
+    CGFloat contentMargin = [[self firstAppearanceValueMatchingBlock:^id(id appearance) {
+        return (([appearance contentMargin] != 0) ? @([appearance contentMargin]) : nil);
+    }] floatValue];
+    
+    CGFloat profileImageHeight = [[self firstAppearanceValueMatchingBlock:^id(id appearance) {
+        return (([appearance profileImageSize].height != 0) ? @([appearance profileImageSize].height) : nil);
+    }] floatValue];
+    
+    UIFont *contentFont = [self firstAppearanceValueMatchingBlock:^id(id appearance) {
+        return [appearance contentTextAttributes][UITextAttributeFont];
+    }];
+    
+    CGSize captionSize;
+    if (caption && ![caption isEqualToString:@""]) {
+        CGSize maxTitleSize = CGSizeMake(width - (padding.left + padding.right), CGFLOAT_MAX);
+        captionSize = [caption sizeWithFont:contentFont constrainedToSize:maxTitleSize];
     } else {
-        deviceWidth = [[UIScreen mainScreen] bounds].size.width;
+        captionSize = CGSizeZero;
     }
-    return floorf((deviceWidth - (columnCount + 1) * cellSpacing)/columnCount);
+    
+    CGFloat imageSize = (width - (padding.left + padding.right));
+    
+    CGFloat height = (padding.top + profileImageHeight + contentMargin + imageSize + contentMargin + captionSize.height + padding.bottom);
+    return CGSizeMake(width, height);
 }
 
-+ (CGSize)profileImageSizeForInterfaceOrientation:(UIInterfaceOrientation)orientation
-{
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-        return UIInterfaceOrientationIsLandscape(orientation) ? CGSizeMake(60.0, 60.0) : CGSizeMake(60.0, 60.0);
-    } else {
-        return CGSizeMake(40.0, 40.0);
-    }
-}
-
-+ (CGSize)instagramImageSizeForInterfaceOrientation:(UIInterfaceOrientation)orientation
-{
-    CGFloat imageWidth = [MSInstagramPhotoCell cellWidthForInterfaceOrientation:orientation] -
-                         [MSInstagramPhotoCell cellPaddingForInterfaceOrientation:orientation] * 2;
-    return CGSizeMake(imageWidth, imageWidth);
-}
-
-+ (CGFloat)fontSize
-{
-    if ((UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)) {
-        return 16.0;
-    } else {
-        return 15.0;
-    }
-}
-
-+ (CGFloat)cellPaddingForInterfaceOrientation:(UIInterfaceOrientation)orientation
-{
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-        return 14.0;
-    } else {
-        return 10.0;
-    }
-}
-
-+ (UIEdgeInsets)cellMarginForInterfaceOrientation:(UIInterfaceOrientation)orientation
-{
-    CGFloat spacingSize = [self cellSpacingForInterfaceOrientation:orientation];
-    return UIEdgeInsetsMake(spacingSize, spacingSize, spacingSize, spacingSize);
-}
-
-+ (CGFloat)cellSpacingForInterfaceOrientation:(UIInterfaceOrientation)orientation
-{
-    if ((UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)) {
-        return 14.0;
-    } else {
-        return 10.0;
-    }
-}
-
-+ (NSInteger)columnCountForInterfaceOrientation:(UIInterfaceOrientation)orientation
-{
-    if ((UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)) {
-        return UIInterfaceOrientationIsLandscape(orientation) ? 3.0 : 2.0;
-    } else {
-        return 1.0;
-    }
-}
 
 @end
